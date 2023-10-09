@@ -15,7 +15,7 @@ export class Order {
     return Order.instance;
   }
 
-  mount() {
+  mount(parent) {
     if (this.isMounted) return;
 
     const orderWrapper = document.createElement('div');
@@ -67,7 +67,8 @@ export class Order {
 
     this.containerElement.append(orderWrapper);
 
-    document.querySelector('main').append(this.element);
+    // document.querySelector('main').append(this.element);
+    parent.append(this.element);
     this.isMounted = true;
   }
 

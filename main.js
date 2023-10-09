@@ -61,7 +61,7 @@ const init = () => {
     })
     .on('/order', () => {
       console.log('order');
-      new Order().mount();
+      new Order().mount(new Main().element);
     })
     .notFound(() => {
       console.log(404);
