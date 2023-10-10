@@ -5,6 +5,10 @@ import { Header } from './modules/Header/Header';
 import { Main } from './modules/Main/Main';
 import { Footer } from './modules/Footer/Footer';
 import { Order } from './modules/Order/Order';
+import { ProductList } from './modules/ProductList/ProductList';
+import { ErrorPage } from './modules/ErrorPage/ErrorPage';
+import { ApiService } from './services/ApiService';
+import { Catalog } from './modules/Catalog/Catalog';
 
 const productSlider = () => {
   Promise.all([import('swiper/modules'), import('swiper'), import('swiper/css')]).then(
@@ -32,24 +36,66 @@ const productSlider = () => {
 };
 
 const init = () => {
+  const api = new ApiService();
+  const router = new Navigo('/', { linksSelector: 'a[href^="/"]' });
+
   new Header().mount();
   new Main().mount();
   new Footer().mount();
 
+  api.getProductCategories().then((data) => {
+    new Catalog().mount(new Main().element, data);
+    router.updatePageLinks();
+  });
+
   productSlider();
 
-  const router = new Navigo('/', { linksSelector: 'a[href^="/"]' });
-
   router
-    .on('/', () => {
-      console.log('Main');
-    })
-    .on('/category', () => {
-      console.log('category');
-    })
-    .on('/favorite', () => {
-      console.log('favorite');
-    })
+    .on(
+      '/',
+      async () => {
+        const product = await api.getProducts();
+        new ProductList().mount(new Main().element, product);
+        router.updatePageLinks();
+      },
+      {
+        leave(done) {
+          new ProductList().unmount();
+          done();
+        },
+        already() {
+          console.log('already');
+        },
+      },
+    )
+    .on(
+      '/category',
+      async ({ params: { slug } }) => {
+        const product = await api.getProducts();
+        new ProductList().mount(new Main().element, product, slug);
+        router.updatePageLinks();
+      },
+      {
+        leave(done) {
+          new ProductList().unmount();
+          done();
+        },
+      },
+    )
+    .on(
+      '/favorite',
+      async () => {
+        const product = await api.getProducts();
+        new ProductList().mount(new Main().element, product, 'Избранное');
+        router.updatePageLinks();
+      },
+      {
+        leave(done) {
+          new ProductList().unmount();
+          done();
+        },
+      },
+    )
     .on('/search', () => {
       console.log('search');
     })
@@ -63,9 +109,21 @@ const init = () => {
       console.log('order');
       new Order().mount(new Main().element);
     })
-    .notFound(() => {
-      console.log(404);
-    });
+    .notFound(
+      () => {
+        new ErrorPage().mount(new Main().element);
+
+        setTimeout(() => {
+          router.navigate('/');
+        }, 5000);
+      },
+      {
+        leave(done) {
+          new ErrorPage().unmount();
+          done();
+        },
+      },
+    );
 
   router.resolve();
 };

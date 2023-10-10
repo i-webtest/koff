@@ -33,11 +33,10 @@
     }
   }
 
-  &__item {}
-
   &__link {
     display: block;
     color: #969EAE;
+    white-space: nowrap;
     border-radius: 32px;
     background-color: #EEEFF2;
     border: 1px solid transparent;
